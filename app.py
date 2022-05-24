@@ -1,4 +1,5 @@
-from flask import Flask , render_template , Response
+from email import message
+from flask import Flask, jsonify , render_template , Response
 from AttendanceProject import camera_output
 import csv
 
@@ -24,6 +25,13 @@ def attendance():
             
                 return render_template('attendance.html', data=data)    
 
+@app.route("/clear")
+def clear():
+    with open("Attendance.csv","w+") as file:
+        file.close()
+        #return render_template("clearstatus.html",message="cleared")
+        msg={"message":"cleared"}
+        return jsonify(msg)
 
 if __name__ == "__main__":
     app.run(debug=True)
