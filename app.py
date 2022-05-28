@@ -1,37 +1,80 @@
-from email import message
-from flask import Flask, jsonify , render_template , Response
+from fastapi import FastAPI ,Request ,UploadFile,File
+from fastapi.templating import Jinja2Templates
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from AttendanceProject import camera_output
 import csv
+import webbrowser
+import uvicorn
+import os
+csvfilepath="Attendance.csv"
 
-app=Flask(__name__)
-
-
-@app.route("/")
-def home():
- return render_template("home.html")
-
-@app.route('/video_feed')
-def video_feed():
-    return Response(camera_output(), mimetype='multipart/x-mixed-replace; boundary=frame')
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-@app.route("/attendance")
-def attendance():
+
+
+@app.get("/")
+async def home(request: Request):
+  return templates.TemplateResponse("home.html",{"request":request})
+
+@app.get('/video_feed')
+async def video_feed():
+     return StreamingResponse(camera_output(),media_type='multipart/x-mixed-replace; boundary=frame')
+
+@app.get("/attendance")
+def attendance(request:Request):
        data=[]
-       with open("Attendance.csv") as file:
+       totalcount=0
+       with open("totalcount.doc","r") as countfile:
+             filedata=countfile.read()
+             totalcount=int(filedata)
+
+       with open("Attendance.csv","r") as file:
                 csv_file = csv.reader(file)
                 for row in csv_file:
+                    
                     data.append(row)
-            
-                return render_template('attendance.html', data=data)    
+                
+                if os.stat(csvfilepath).st_size == 0:
+                     pass
+                else:
+                     if(len(data[0])==0):
+                        data.pop(0)
+              
+                
+                return templates.TemplateResponse('attendance.html', {"request":request,"data":data,"noofstudentspresent":len(data),"totalcount":totalcount})    
 
-@app.route("/clear")
+
+@app.get("/clear")
 def clear():
-    with open("Attendance.csv","w+") as file:
+    with open("Attendance.csv","w") as file:
+        file.truncate()
         file.close()
-        #return render_template("clearstatus.html",message="cleared")
         msg={"message":"cleared"}
-        return jsonify(msg)
+        json_data=jsonable_encoder(msg)
+        return JSONResponse(content=json_data)
+
+
+
+    
+@app.post("/uploadfile/")
+async def import_file_post(imagefile: UploadFile = File(...)):
+    file_location = f"./ImagesAttendance/{imagefile.filename}"
+    with open(file_location, "wb+") as file_object:
+        file_object.write(imagefile.file.read())
+        
+    msg={"status":True}
+    json_data=jsonable_encoder(msg)
+    return JSONResponse(content=json_data)
+    
+
+
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    webbrowser.open("http://localhost:5000/")
+    uvicorn.run("app:app", host="127.0.0.1", port=5000, log_level="info")

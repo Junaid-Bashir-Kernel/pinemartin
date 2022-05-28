@@ -2,15 +2,58 @@
 <html>
  <head>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <script src="https://cdn.plot.ly/plotly-2.12.1.min.js"></script>
  </head>
  <body>
  <center>
-<p style="font-family:'Courier new;">Attendance Data</p>
-<div class="container-fluid">
- {% for item  in data %}
- <h1 class="badge alert-success">{{item}}</h1>
- {% endfor %}
+  <b><p>Attendance for  <u><label id='today'></label></u></p></b>
+ <div class="row">
+<div class="col">
+<p id="total" style="display:none;">{{totalcount}}</p>
+ <p id="count" style="display:none;">{{noofstudentspresent}}</p>
+ <p style="font-family:'Courier new;">Attendance Data</p>
+ <div class="container-fluid">
+  {% for item  in data %}
+  <h1 class="container alert-success">{{item}}</h1><br/>
+  {% endfor %}
+ </div>
+
 </div>
+<div class="col">
+ <div id="myDiv"></div>
+</div>
+ </div> 
+
+<script>
+
+let presentcount=document.getElementById("count").innerHTML; 
+let totalcount=document.getElementById("total").innerHTML;
+let timeanddate=document.getElementById("today")
+var currentdate = new Date(); 
+var datetime =currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/" 
+                + currentdate.getFullYear() + " @ "  
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
+timeanddate.innerHTML=datetime
+var  total=Number(totalcount)
+var present=Number(presentcount)
+let absent=total-present
+var data = [{
+  values: [present, absent],
+  labels: ['Present % ', 'Absent %'],
+  type: 'pie'
+}];
+
+var layout = {
+  height: 600,
+  width: 600
+};
+
+Plotly.newPlot('myDiv', data, layout);
+
+</script>
 </center>
  </body>
 </html>
