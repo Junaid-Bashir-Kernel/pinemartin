@@ -7,7 +7,9 @@ from fastapi.staticfiles import StaticFiles
 from AttendanceProject import camera_output
 import csv
 import webbrowser
-import uvicorn
+import asyncio
+from hypercorn.config import Config
+from hypercorn.asyncio import serve
 import os
 csvfilepath="Attendance.csv"
 
@@ -76,5 +78,7 @@ async def import_file_post(imagefile: UploadFile = File(...)):
 
 
 if __name__ == "__main__":
-    webbrowser.open("http://localhost:5000/")
-    uvicorn.run("app:app", host="127.0.0.1", port=5000, log_level="info")
+    config = Config()
+    config.bind = ["0.0.0.0:8000"]
+    webbrowser.open("http://localhost:8000/")
+    asyncio.run(serve(app, Config()))
